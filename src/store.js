@@ -1,13 +1,14 @@
 'use strict';
 
 const { STATUSES } = require('./statuses');
-const { canCancel } = require('./policy');
+const { cancellationDetails } = require('./policy');
 
 class AppointmentError extends Error {
-  constructor(message, status = 400) {
+  constructor(message, status = 400, appointment) {
     super(message);
     this.name = 'AppointmentError';
     this.status = status;
+    this.appointment = appointment;
   }
 }
 
@@ -49,22 +50,27 @@ function createStore({ now = () => new Date(), appointments } = {}) {
 
   return {
     list() {
+      const currentTime = now();
       return [...items.values()]
         .sort((a, b) => Date.parse(a.start) - Date.parse(b.start))
-        .map((appointment) => ({ ...appointment }));
+        .map((appointment) => ({ ...appointment, ...cancellationDetails(appointment, currentTime) }));
     },
 
     get(id) {
-      return { ...find(id) };
+      const appointment = find(id);
+      return { ...appointment, ...cancellationDetails(appointment, now()) };
     },
 
     cancel(id) {
       const appointment = find(id);
-      const decision = canCancel(appointment, now());
-      if (!decision.allowed) throw new AppointmentError(decision.reason, 409);
+      const currentTime = now();
+      const details = cancellationDetails(appointment, currentTime);
+      if (!details.canCancel) {
+        throw new AppointmentError(details.cancellationReason, 409, { ...appointment, ...details });
+      }
       appointment.status = STATUSES.CANCELED;
-      appointment.canceledAt = now().toISOString();
-      return { ...appointment };
+      appointment.canceledAt = currentTime.toISOString();
+      return { ...appointment, ...cancellationDetails(appointment, currentTime) };
     },
   };
 }

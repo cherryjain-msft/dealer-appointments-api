@@ -48,7 +48,10 @@ function createServer(store = createStore()) {
       route(store, req, res);
     } catch (err) {
       if (err instanceof AppointmentError) {
-        send(res, err.status, { error: err.message });
+        send(res, err.status, {
+          error: err.message,
+          ...(err.appointment ? { appointment: err.appointment } : {}),
+        });
         return;
       }
       console.error(err);

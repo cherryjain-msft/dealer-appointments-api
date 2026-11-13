@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- Apply cancellation policy v2: only booked appointments can be canceled online, up to and including 2 hours before the start time, with no cancellation or no-show fees.
+- Add `cancelDeadline`, `canCancel` and `cancellationReason` to appointments on list, get and cancel responses.
+- Recheck eligibility at cancellation time and return the current appointment alongside the existing `error` field on `409`, with status-specific, actionable explanations.
+
 ## 1.4.0 (2025-04-14)
 
 - Changed the online cancellation cutoff from 48 hours to 24 hours before the start time (cancellation policy v1).
